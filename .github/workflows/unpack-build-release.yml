@@ -24,40 +24,34 @@ jobs:
           ref: main
           fetch-depth: 0
 
-      - name: Restore original source archive
+      - name: Reassemble source archive
         shell: pwsh
         run: |
           $ErrorActionPreference = "Stop"
+          $chunkRoot = Join-Path $env:GITHUB_WORKSPACE ".github/fix22"
           $zip = Join-Path $env:GITHUB_WORKSPACE "EpochSand_Cpp23_Vulkan_WindowsFix22.zip"
-          $archiveSpec = "5c0f480c33957d98b5a2a2c935044e8a46607b13:EpochSand_Cpp23_Vulkan_WindowsFix22.zip"
+          $chunks = @(Get-ChildItem -LiteralPath $chunkRoot -Filter "chunk_*.txt" -File | Sort-Object Name)
+          if ($chunks.Count -eq 0) {
+              throw "No Fix22 archive chunks were found in $chunkRoot"
+          }
 
-          $startInfo = [System.Diagnostics.ProcessStartInfo]::new()
-          $startInfo.FileName = "git"
-          [void]$startInfo.ArgumentList.Add("show")
-          [void]$startInfo.ArgumentList.Add($archiveSpec)
-          $startInfo.UseShellExecute = $false
-          $startInfo.RedirectStandardOutput = $true
-          $startInfo.RedirectStandardError = $true
+          $base64 = [System.Text.StringBuilder]::new()
+          foreach ($chunk in $chunks) {
+              [void]$base64.Append((Get-Content -LiteralPath $chunk.FullName -Raw).Trim())
+          }
 
-          $process = [System.Diagnostics.Process]::Start($startInfo)
-          $output = [System.IO.File]::Create($zip)
           try {
-              $process.StandardOutput.BaseStream.CopyTo($output)
+              $bytes = [Convert]::FromBase64String($base64.ToString())
           }
-          finally {
-              $output.Dispose()
-          }
-          $errorText = $process.StandardError.ReadToEnd()
-          $process.WaitForExit()
-          if ($process.ExitCode -ne 0) {
-              throw "git show failed to restore the original archive: $errorText"
+          catch {
+              throw "Fix22 archive chunks do not form valid Base64: $($_.Exception.Message)"
           }
 
-          $bytes = [System.IO.File]::ReadAllBytes($zip)
+          [System.IO.File]::WriteAllBytes($zip, $bytes)
           if ($bytes.Length -lt 4 -or $bytes[0] -ne 0x50 -or $bytes[1] -ne 0x4B) {
-              throw "Restored Fix22 archive does not have a ZIP signature"
+              throw "Reassembled Fix22 archive does not have a ZIP signature"
           }
-          Write-Host "Restored original archive from Git history ($($bytes.Length) bytes)."
+          Write-Host "Reassembled $($chunks.Count) chunks into $zip ($($bytes.Length) bytes)."
 
       - name: Unpack source into repository root
         shell: pwsh
