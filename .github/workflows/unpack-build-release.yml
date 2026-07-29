@@ -24,6 +24,35 @@ jobs:
           ref: main
           fetch-depth: 0
 
+      - name: Reassemble source archive
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $chunkRoot = Join-Path $env:GITHUB_WORKSPACE ".github/fix22"
+          $zip = Join-Path $env:GITHUB_WORKSPACE "EpochSand_Cpp23_Vulkan_WindowsFix22.zip"
+          $chunks = Get-ChildItem -LiteralPath $chunkRoot -Filter "chunk_*.txt" -File | Sort-Object Name
+          if ($chunks.Count -eq 0) {
+              throw "No Fix22 archive chunks were found in $chunkRoot"
+          }
+
+          $base64 = [System.Text.StringBuilder]::new()
+          foreach ($chunk in $chunks) {
+              [void]$base64.Append((Get-Content -LiteralPath $chunk.FullName -Raw).Trim())
+          }
+
+          try {
+              $bytes = [Convert]::FromBase64String($base64.ToString())
+          }
+          catch {
+              throw "Fix22 archive chunks do not form valid Base64: $($_.Exception.Message)"
+          }
+
+          [System.IO.File]::WriteAllBytes($zip, $bytes)
+          if ($bytes.Length -lt 4 -or $bytes[0] -ne 0x50 -or $bytes[1] -ne 0x4B) {
+              throw "Reassembled Fix22 archive does not have a ZIP signature"
+          }
+          Write-Host "Reassembled $($chunks.Count) chunks into $zip ($($bytes.Length) bytes)."
+
       - name: Unpack source into repository root
         shell: pwsh
         run: |
@@ -51,6 +80,7 @@ jobs:
           }
 
           Remove-Item -LiteralPath $zip -Force
+          Remove-Item -LiteralPath ".github/fix22" -Recurse -Force -ErrorAction SilentlyContinue
           Remove-Item -LiteralPath ".github/release-trigger" -Force -ErrorAction SilentlyContinue
           Remove-Item -LiteralPath ".github/workflows/unpack-build-release.yml" -Force -ErrorAction SilentlyContinue
 
