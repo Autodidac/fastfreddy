@@ -11,31 +11,81 @@ const uint BEE_AUX_MIGRATING = 0x02000000u;
 const uint BEE_METADATA_MASK = 0x00ffffffu;
 
 const uint BEE_SWARM_BIOHAZARD_TICKS = 1800u;
-const uint BEE_SWARM_ALTERNATE_TICKS = 600u;
-const uint BEE_SWARM_CYCLE_TICKS =
-    BEE_SWARM_BIOHAZARD_TICKS + BEE_SWARM_ALTERNATE_TICKS * 2u;
+const uint BEE_SWARM_CIRCLE_TICKS = 900u;
+// Compatibility name retained for the inherited ecology audit. There is now
+// exactly one alternate state: the swarm circle.
+const uint BEE_SWARM_ALTERNATE_TICKS = BEE_SWARM_CIRCLE_TICKS;
+const uint BEE_SWARM_CYCLE_TICKS = BEE_SWARM_BIOHAZARD_TICKS + BEE_SWARM_CIRCLE_TICKS;
 
-const uint BEE_INITIAL_PACKED[BEE_FORMATION_COUNT] = uint[](
-    1479u, 1597u, 1850u, 1989u, 1999u, 2099u, 2109u, 2114u, 2229u, 2232u,
-    2235u, 2258u, 2366u, 2386u, 2479u, 2483u, 2503u, 2506u, 2510u, 2615u,
-    2622u, 2763u, 2773u, 2863u, 2866u, 2867u, 2871u, 2988u, 2989u, 2994u,
-    2999u, 3125u, 3243u, 3256u, 3285u, 3374u, 3535u, 3794u, 3885u, 3887u,
-    3924u, 3928u, 4010u, 4140u, 4178u, 4275u, 4432u, 4434u, 4439u, 4520u,
-    4560u, 4649u, 4650u, 4779u, 4817u, 5161u, 5946u, 5952u, 6208u, 6210u,
-    6219u, 6325u, 6340u, 6450u, 6597u, 6861u, 6989u, 7121u, 7458u, 7525u,
-    7527u, 7776u, 7829u, 7831u, 7844u, 7853u, 7856u, 8039u, 8042u, 8084u,
-    8098u, 8166u, 8172u, 8243u, 8338u, 8349u, 8353u, 8404u, 8416u, 8423u,
-    8429u, 8607u, 8624u, 8674u, 8736u, 8807u, 8812u, 8853u, 8909u, 8912u,
-    8914u, 8916u, 8938u, 8939u, 8980u, 9107u, 9110u, 9112u, 9136u, 9141u,
-    9170u, 9187u, 9199u, 9241u, 9369u, 9393u, 9446u, 9576u, 9578u, 9583u,
-    9617u, 9618u, 9623u, 9657u, 9673u, 9752u, 9804u, 9919u, 9959u, 9966u,
-    10042u, 10087u, 10220u, 10638u, 10648u, 10694u, 10736u, 10822u, 10853u, 10897u,
-    10988u, 10994u, 11118u, 11187u, 11363u, 11374u, 11411u, 11471u, 11475u, 11544u,
-    11549u, 11569u, 11673u, 11732u, 11814u, 11817u, 11822u, 11870u, 11930u, 11943u,
-    11984u, 11986u, 11998u, 12111u, 12117u, 12128u, 12134u, 12185u, 12190u, 12198u,
-    12211u, 12259u, 12310u, 12313u, 12329u, 12386u, 12388u, 12451u, 12456u, 12570u,
-    12578u, 12592u, 12596u, 12598u, 12622u, 12624u, 12627u, 12646u, 12702u, 12724u,
-    12750u, 12755u, 12768u, 12901u, 12961u, 12977u, 13020u, 13085u, 13097u, 13402u
+const uint BEE_BIOHAZARD_PACKED[BEE_FORMATION_COUNT] = uint[](
+    2366u, 2370u, 2489u, 2503u, 2741u, 2763u, 2879u, 2883u, 2993u, 3002u,
+    3023u, 3144u, 3254u, 3404u, 3501u, 3539u, 3634u, 3791u, 4011u, 4053u,
+    4143u, 4306u, 4521u, 4567u, 4653u, 4926u, 4930u, 4948u, 5160u, 5178u,
+    5190u, 5208u, 5292u, 5559u, 5577u, 5588u, 5800u, 5804u, 5848u, 6069u,
+    6091u, 6099u, 6205u, 6211u, 6313u, 6359u, 6446u, 6572u, 6577u, 6580u,
+    6583u, 6592u, 6601u, 6604u, 6607u, 6612u, 6696u, 6715u, 6725u, 6737u,
+    6744u, 6819u, 6877u, 6955u, 6960u, 6997u, 7071u, 7085u, 7091u, 7093u,
+    7095u, 7113u, 7115u, 7117u, 7121u, 7125u, 7137u, 7208u, 7217u, 7247u,
+    7258u, 7332u, 7342u, 7378u, 7452u, 7518u, 7524u, 7603u, 7604u, 7628u,
+    7629u, 7712u, 7727u, 7761u, 7856u, 7888u, 7961u, 8034u, 8039u, 8107u,
+    8149u, 8220u, 8243u, 8269u, 8421u, 8471u, 8489u, 8535u, 8553u, 8624u,
+    8656u, 8730u, 8884u, 8908u, 9062u, 9109u, 9128u, 9176u, 9195u, 9369u,
+    9395u, 9399u, 9417u, 9421u, 9641u, 9687u, 9703u, 9749u, 9787u, 9797u,
+    9835u, 9881u, 9911u, 9920u, 9929u, 10046u, 10050u, 10155u, 10197u, 10215u,
+    10262u, 10301u, 10307u, 10346u, 10427u, 10432u, 10437u, 10522u, 10542u, 10578u,
+    10674u, 10679u, 10684u, 10687u, 10692u, 10697u, 10702u, 10853u, 10903u, 10946u,
+    10985u, 11036u, 11197u, 11199u, 11201u, 11362u, 11417u, 11461u, 11495u, 11551u,
+    11578u, 11711u, 11713u, 11743u, 11849u, 11933u, 11939u, 11958u, 11995u, 12003u,
+    12072u, 12091u, 12101u, 12109u, 12192u, 12204u, 12209u, 12242u, 12246u, 12256u,
+    12453u, 12471u, 12489u, 12507u, 12595u, 12621u, 12713u, 12718u, 12754u, 12759u
+);
+
+// Spawn positions preserve all 200 identities without overwriting the restored
+// wooden perch or hive shell. Each entry maps back to its biohazard target slot.
+const uint BEE_SPAWN_PACKED[BEE_FORMATION_COUNT] = uint[](
+    2366u, 2370u, 2489u, 2503u, 2741u, 2763u, 2879u, 2883u, 2993u, 3002u,
+    3023u, 3144u, 3254u, 3404u, 3501u, 3539u, 3634u, 3791u, 4011u, 4053u,
+    4143u, 4306u, 4521u, 4567u, 4653u, 4926u, 4930u, 4948u, 5160u, 5178u,
+    5190u, 5208u, 5292u, 5559u, 5577u, 5588u, 5800u, 5804u, 5848u, 6057u,
+    6069u, 6077u, 6083u, 6091u, 6099u, 6103u, 6696u, 6700u, 6702u, 6705u,
+    6708u, 6711u, 6715u, 6720u, 6725u, 6729u, 6732u, 6735u, 6737u, 6740u,
+    6744u, 6819u, 6877u, 6955u, 6960u, 6997u, 7071u, 7085u, 7091u, 7093u,
+    7095u, 7113u, 7115u, 7117u, 7121u, 7125u, 7137u, 7208u, 7217u, 7247u,
+    7258u, 7332u, 7342u, 7378u, 7452u, 7518u, 7524u, 7603u, 7604u, 7628u,
+    7629u, 7712u, 7727u, 7761u, 7856u, 7888u, 7961u, 8034u, 8039u, 8107u,
+    8149u, 8220u, 8243u, 8269u, 8421u, 8471u, 8489u, 8535u, 8553u, 8624u,
+    8656u, 8730u, 8884u, 8908u, 9062u, 9109u, 9128u, 9176u, 9195u, 9369u,
+    9395u, 9399u, 9417u, 9421u, 9641u, 9687u, 9703u, 9749u, 9787u, 9797u,
+    9835u, 9881u, 9911u, 9920u, 9929u, 10046u, 10050u, 10155u, 10197u, 10215u,
+    10262u, 10301u, 10307u, 10346u, 10427u, 10432u, 10437u, 10522u, 10542u, 10578u,
+    10674u, 10679u, 10684u, 10687u, 10692u, 10697u, 10702u, 10853u, 10903u, 10946u,
+    10985u, 11036u, 11197u, 11199u, 11201u, 11362u, 11417u, 11461u, 11495u, 11551u,
+    11578u, 11711u, 11713u, 11743u, 11849u, 11933u, 11939u, 11958u, 11995u, 12003u,
+    12072u, 12091u, 12101u, 12109u, 12192u, 12204u, 12209u, 12242u, 12246u, 12256u,
+    12453u, 12471u, 12489u, 12507u, 12595u, 12621u, 12713u, 12718u, 12754u, 12759u
+);
+
+const uint BEE_SPAWN_SLOT[BEE_FORMATION_COUNT] = uint[](
+    0u, 1u, 2u, 3u, 4u, 5u, 6u, 7u, 8u, 9u,
+    10u, 11u, 12u, 13u, 14u, 15u, 16u, 17u, 18u, 19u,
+    20u, 21u, 22u, 23u, 24u, 25u, 26u, 27u, 28u, 29u,
+    30u, 31u, 32u, 33u, 34u, 35u, 36u, 37u, 38u, 44u,
+    39u, 42u, 43u, 40u, 41u, 45u, 56u, 47u, 46u, 48u,
+    49u, 50u, 57u, 51u, 58u, 52u, 53u, 54u, 59u, 55u,
+    60u, 61u, 62u, 63u, 64u, 65u, 66u, 67u, 68u, 69u,
+    70u, 71u, 72u, 73u, 74u, 75u, 76u, 77u, 78u, 79u,
+    80u, 81u, 82u, 83u, 84u, 85u, 86u, 87u, 88u, 89u,
+    90u, 91u, 92u, 93u, 94u, 95u, 96u, 97u, 98u, 99u,
+    100u, 101u, 102u, 103u, 104u, 105u, 106u, 107u, 108u, 109u,
+    110u, 111u, 112u, 113u, 114u, 115u, 116u, 117u, 118u, 119u,
+    120u, 121u, 122u, 123u, 124u, 125u, 126u, 127u, 128u, 129u,
+    130u, 131u, 132u, 133u, 134u, 135u, 136u, 137u, 138u, 139u,
+    140u, 141u, 142u, 143u, 144u, 145u, 146u, 147u, 148u, 149u,
+    150u, 151u, 152u, 153u, 154u, 155u, 156u, 157u, 158u, 159u,
+    160u, 161u, 162u, 163u, 164u, 165u, 166u, 167u, 168u, 169u,
+    170u, 171u, 172u, 173u, 174u, 175u, 176u, 177u, 178u, 179u,
+    180u, 181u, 182u, 183u, 184u, 185u, 186u, 187u, 188u, 189u,
+    190u, 191u, 192u, 193u, 194u, 195u, 196u, 197u, 198u, 199u
 );
 
 uint beeHash32(uint value) {
@@ -48,7 +98,7 @@ uint beeHash32(uint value) {
 }
 
 ivec2 beeFormationOffset(uint slot) {
-    uint packedValue = BEE_INITIAL_PACKED[min(slot, BEE_FORMATION_COUNT - 1u)];
+    uint packedValue = BEE_BIOHAZARD_PACKED[min(slot, BEE_FORMATION_COUNT - 1u)];
     return ivec2(int(packedValue & 127u) - 64, int(packedValue >> 7u) - 64);
 }
 
@@ -59,8 +109,8 @@ int beeFormationSlotFromOffset(ivec2 offset) {
     int high = int(BEE_FORMATION_COUNT) - 1;
     for (int iteration = 0; iteration < 8 && low <= high; ++iteration) {
         int middle = (low + high) / 2;
-        uint middleKey = BEE_INITIAL_PACKED[middle];
-        if (key == middleKey) return middle;
+        uint middleKey = BEE_SPAWN_PACKED[middle];
+        if (key == middleKey) return int(BEE_SPAWN_SLOT[middle]);
         if (key < middleKey) high = middle - 1;
         else low = middle + 1;
     }
@@ -113,14 +163,8 @@ ivec2 beeRotateOffset(ivec2 offset, uint phase) {
     return offset;
 }
 
-uint beeSwarmState(uint aux, uint step) {
-    uint local = step % BEE_SWARM_CYCLE_TICKS;
-    if (local < BEE_SWARM_BIOHAZARD_TICKS) return 0u;
-    ivec2 home = beeHomeCenterFromAux(aux);
-    uint cycle = step / BEE_SWARM_CYCLE_TICKS;
-    bool reverse = (beeHash32(uint(home.x) * 73856093u ^ uint(home.y) * 19349663u ^ cycle) & 1u) != 0u;
-    uint alternate = (local - BEE_SWARM_BIOHAZARD_TICKS) / BEE_SWARM_ALTERNATE_TICKS;
-    return reverse ? 2u - alternate : 1u + alternate;
+uint beeSwarmState(uint step) {
+    return (step % BEE_SWARM_CYCLE_TICKS) < BEE_SWARM_BIOHAZARD_TICKS ? 0u : 1u;
 }
 
 ivec2 beeBiohazardTargetOffset(uint slot, uint step, ivec2 home) {
@@ -133,30 +177,21 @@ ivec2 beeBiohazardTargetOffset(uint slot, uint step, ivec2 home) {
     return anchor + flutter;
 }
 
-ivec2 beeHaloTargetOffset(uint slot, uint step) {
-    int radius = 34 + int((slot * 13u) % 18u);
-    uint phase = step / 10u + slot * 7u;
+ivec2 beeCircleTargetOffset(uint slot, uint step) {
+    // A breathing annulus rather than a rigid geometric ring. Bees keep their
+    // individual circulation while the colony reads as one round swarm.
+    int radius = 37 + int((slot * 13u) % 12u);
+    uint phase = step / 9u + slot * 7u;
     return beeRotateOffset(ivec2(radius, 0), phase) +
-           beeRotateOffset(ivec2(2, 0), step / 3u + slot * 11u);
-}
-
-ivec2 beeCloudTargetOffset(uint slot, uint step) {
-    uint lobe = slot % 3u;
-    ivec2 center = lobe == 0u ? ivec2(0, -29) :
-                   (lobe == 1u ? ivec2(-26, 15) : ivec2(26, 15));
-    int radius = 5 + int((slot * 17u) % 16u);
-    uint phase = step / 8u + slot * 9u;
-    return center + beeRotateOffset(ivec2(radius, 0), phase) +
-           beeRotateOffset(ivec2(1, 0), step / 2u + slot * 3u);
+           beeRotateOffset(ivec2(2 + int(slot & 1u), 0), step / 3u + slot * 11u);
 }
 
 ivec2 beeSwarmTarget(uint aux, uint step) {
     uint slot = beeFormationSlotFromAux(aux);
     ivec2 home = beeHomeCenterFromAux(aux);
-    uint state = beeSwarmState(aux, step);
-    ivec2 offset = state == 0u ? beeBiohazardTargetOffset(slot, step, home) :
-                   (state == 1u ? beeHaloTargetOffset(slot, step)
-                                : beeCloudTargetOffset(slot, step));
+    ivec2 offset = beeSwarmState(step) == 0u
+        ? beeBiohazardTargetOffset(slot, step, home)
+        : beeCircleTargetOffset(slot, step);
     return home + offset;
 }
 

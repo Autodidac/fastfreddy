@@ -67,23 +67,36 @@ void main() {
     Cell cell;
     int colonySlot = -1;
     if (material == MAT_BEE_NEST) {
-        // Exact Fix29 compact hive. The larger dispatch only initializes the
-        // hidden 200-bee mask around the hive; it does not enlarge the shell.
-        if (distanceSquared >= 28 && distanceSquared < 108) {
-            cell = makeCell(MAT_BEE_NEST);
-        } else if (all(equal(p, center))) {
-            cell = makeCell(MAT_QUEEN_BEE);
-        } else if (delta.x >= 1 && delta.x <= 12 && abs(delta.y) <= 1) {
-            cell = makeCell(MAT_EMPTY);
-        } else if (distanceSquared < 28) {
-            uint chamber = cellHash(p, 0xb33u);
-            cell = makeCell((chamber & 3u) == 0u ? MAT_EMPTY :
-                            ((chamber & 4u) == 0u ? MAT_HONEY : MAT_POLLEN));
-        } else {
+        // The buildable hive is the same suspended ecosystem prefab used by
+        // Sandbox and Ecosystem, including its queen, chambers and 200 bees.
+        uint prefabMaterial = MAT_EMPTY;
+        bool prefabCell = false;
+        if (delta.x > -38 && delta.x < 30 && delta.y > -17 && delta.y < -12) {
+            prefabMaterial = MAT_WOOD;
+            prefabCell = true;
+        }
+        if (distanceSquared >= 25 && distanceSquared < 92) {
+            prefabMaterial = MAT_BEE_NEST;
+            prefabCell = true;
+        }
+        if (all(equal(p, center))) {
+            prefabMaterial = MAT_QUEEN_BEE;
+            prefabCell = true;
+        } else if (delta.x >= 1 && delta.x <= 10 && abs(delta.y) <= 1) {
+            prefabMaterial = MAT_EMPTY;
+            prefabCell = true;
+        } else if (distanceSquared < 25) {
+            uint chamberPattern = cellHash(p, 0xb33u);
+            prefabMaterial = (chamberPattern & 3u) == 0u ? MAT_EMPTY :
+                (((chamberPattern >> 2u) & 1u) == 0u ? MAT_HONEY : MAT_POLLEN);
+            prefabCell = true;
+        }
+        if (!prefabCell) {
             colonySlot = beeFormationSlotFromOffset(delta);
             if (colonySlot < 0) return;
-            cell = makeCell(MAT_BEE);
+            prefabMaterial = MAT_BEE;
         }
+        cell = makeCell(prefabMaterial);
     } else {
         cell = makeCell(material);
     }
