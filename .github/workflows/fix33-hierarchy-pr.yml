@@ -104,4 +104,4 @@ jobs:
           git commit -m 'SandHybrid Fix33: hierarchy on Fix32 with complete GUI'
           git push origin HEAD:${HEAD_BRANCH}
 
-# trigger after PR creation
+# synchronize after base validator install
